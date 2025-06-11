@@ -34,6 +34,7 @@ pip install -r requirements.txt
 python
 
 ## Example usage
+<<<<<<< HEAD
 ### Read
 >>> from interface_class import *
 >>> def use_database(db: BaseDBInterface):
@@ -68,3 +69,19 @@ python
 >>> sql_server.connect()
 
 >>> sql_server.close()
+=======
+
+```python
+from db_setup_code import *
+
+def use_database(db: BaseDBInterface):
+    db.connect()
+    for row in db.read("SELECT * FROM Track"):
+        print(row)
+    db.close()
+
+sql_server = SQLServerDB(server='SK-INSPIRON-3K\\MSSQLSERVER01', database='Chinook')
+
+# This will print the table Track.
+use_database(sql_server)
+>>>>>>> 3dce6ba523d487f5127227bb8bf63916ead83509
