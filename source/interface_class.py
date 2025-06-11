@@ -36,31 +36,71 @@ class SQLServerDB(BaseDBInterface):
             print(f"Connection failed: {e}")
             raise
 
-    def read(self, query) -> List[dict]:
-        '''Execute a read query and return the results as list of dicts.'''
+    def read(self, query_or_table: str) -> List[dict]:
+        """
+        Execute a read query and return the results as list of dicts.
+        If only a table name is provided, it selects all rows.
+        """
         try:
+            # Auto-generate SELECT * if a plain table name is provided
+            if not query_or_table.strip().lower().startswith("select"):
+                query = f"SELECT * FROM {query_or_table}"
+            else:
+                query = query_or_table
+
             self.cursor.execute(query)
             columns = [desc[0] for desc in self.cursor.description]
             rows = self.cursor.fetchall()
             return [dict(zip(columns, row)) for row in rows]
+
         except Exception as e:
             print(f"Read failed: {e}")
             raise
 
-    def stream_read(self, query: str, batch_size: int = 100) -> List[tuple]:
-        '''Reads first batch of rows. Call repeatedly to get next batch.'''
+    def stream_read(self, query_or_table: str, batch_size: int = 100) -> List[tuple]:
+        '''
+        Reads a batch of rows from a query or table.
+        If a table name is provided, it defaults to SELECT * FROM table.
+        Call repeatedly to get the next batch.
+        '''
         try:
+            # Construct query if input is just a table name
+            if not query_or_table.strip().lower().startswith("select"):
+                query = f"SELECT * FROM {query_or_table}"
+            else:
+                query = query_or_table
+
+            # Only execute if it's a new query
             if not hasattr(self, "_active_query") or self._active_query != query:
                 self._active_query = query
                 self.cursor.execute(query)
+
             return self.cursor.fetchmany(batch_size)
+
         except Exception as e:
             print(f"Stream read failed: {e}")
             raise
 
-    def insert(self, query, params) -> None:
-        '''Execute an insert query with parameters.'''
+    # def insert(self, query, params) -> None:
+    #     '''Execute an insert query with parameters.'''
+    #     try:
+    #         self.cursor.execute(query, params)
+    #         self.conn.commit()
+    #     except Exception as e:
+    #         print(f"Insert failed: {e}")
+    #         self.conn.rollback()
+    #         raise
+
+    def insert(self, query_or_table, params) -> None:
+        '''Insert into a table using full query or just table name.'''
         try:
+            if not query_or_table.strip().lower().startswith("insert"):
+                # Build query from table name and number of params
+                placeholders = ', '.join(['?' for _ in params])
+                query = f"INSERT INTO {query_or_table} VALUES ({placeholders})"
+            else:
+                query = query_or_table
+
             self.cursor.execute(query, params)
             self.conn.commit()
         except Exception as e:
@@ -68,9 +108,12 @@ class SQLServerDB(BaseDBInterface):
             self.conn.rollback()
             raise
 
-    def update(self, query, params) -> None:
-        '''Execute an update query with parameters.'''
+    def update(self, table: str, updates: dict, condition: str, condition_params: tuple) -> None:
+        '''Update specific columns in a table where condition is met.'''
         try:
+            set_clause = ', '.join([f"{col} = ?" for col in updates])
+            query = f"UPDATE {table} SET {set_clause} WHERE {condition}"
+            params = tuple(updates.values()) + condition_params
             self.cursor.execute(query, params)
             self.conn.commit()
         except Exception as e:
@@ -88,15 +131,36 @@ class SQLServerDB(BaseDBInterface):
             self.conn.rollback()
             raise
 
-    def bulk_upsert(self, query, params_list) -> None:
+    def bulk_upsert(self, table: str, columns: list, match_column: str, params_list: list[tuple]) -> None:
         '''
-        Execute bulk UPSERT query using MERGE.
-        Each item in params_list is a tuple of values for the source.
+        Perform a bulk upsert (MERGE) into the given table using the specified columns.
+
+        Args:
+            table: Table name.
+            columns: List of column names (order must match the tuple).
+            match_column: Column to match for upsert (must be in columns).
+            params_list: List of tuples with values.
         '''
         try:
+            col_str = ', '.join(columns)
+            val_placeholders = ', '.join(['?' for _ in columns])
+
+            update_str = ', '.join(f'target.{col} = source.{col}' for col in columns if col != match_column)
+
+            merge_query = f"""
+            MERGE {table} AS target
+            USING (SELECT {val_placeholders}) AS source ({col_str})
+            ON target.{match_column} = source.{match_column}
+            WHEN MATCHED THEN
+                UPDATE SET {update_str}
+            WHEN NOT MATCHED THEN
+                INSERT ({col_str}) VALUES ({val_placeholders});
+            """
+
             for params in params_list:
-                self.cursor.execute(query, params)
+                self.cursor.execute(merge_query, params * 2)  # one for SELECT, one for INSERT
             self.conn.commit()
+
         except Exception as e:
             print(f"Bulk upsert failed: {e}")
             self.conn.rollback()
