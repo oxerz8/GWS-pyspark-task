@@ -53,8 +53,9 @@ use_database(sql_server)
 sql_server.connect()
 sql_server.stream_read('SELECT * FROM Track', 2)
 sql_server.close()
-
+```
 ### Insert
+```python
 sql_server.connect()
 query = 'INSERT INTO Track (trackid, name, albumid, unitprice, mediatypeid, milliseconds) VALUES (?, ?, ?, ?, ?, ?)'
 params = (3504, 'abc', 346, 1, 3, 325425)
