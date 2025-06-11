@@ -81,16 +81,6 @@ class SQLServerDB(BaseDBInterface):
             print(f"Stream read failed: {e}")
             raise
 
-    # def insert(self, query, params) -> None:
-    #     '''Execute an insert query with parameters.'''
-    #     try:
-    #         self.cursor.execute(query, params)
-    #         self.conn.commit()
-    #     except Exception as e:
-    #         print(f"Insert failed: {e}")
-    #         self.conn.rollback()
-    #         raise
-
     def insert(self, query_or_table, params) -> None:
         '''Insert into a table using full query or just table name.'''
         try:
