@@ -34,54 +34,34 @@ pip install -r requirements.txt
 python
 
 ## Example usage
-<<<<<<< HEAD
 ### Read
->>> from interface_class import *
->>> def use_database(db: BaseDBInterface):
-...     db.connect()
-...     data = db.read("SELECT * FROM Track"):
-...     print(data)
-...     db.close()
-...
->>> sql_server = SQLServerDB(server='SK-INSPIRON-3K\MSSQLSERVER01', database='Chinook')
-#This will print the table Track.
->>> use_database(sql_server)
-### Stream_read
->>> sql_server.connect()
->>> sql_server.stream_read('select * from Track',2)
->>> sql_server.close()
-
-### Insert
->>> sql_server.connect()
->>> query = 'insert into Track (trackid, name, albumid, unitprice, mediatypeid, milliseconds) values (?,?,?,?,?,?)'
->>> params = (3504,'abc',346,1,3,325425)
->>> sql_server.insert(query,params)
->>> sql_server.close()
-
-### Update
->>> sql_server.connect()
->>> query = 'update Track set milliseconds = ? where trackid = ?'
->>> params = (1234,3504)
->>> sql_server.update(query,params)
->>> sql_server.close()
-
-### Bulk upsert
->>> sql_server.connect()
-
->>> sql_server.close()
-=======
-
-```python
-from db_setup_code import *
+from interface_class import *
 
 def use_database(db: BaseDBInterface):
     db.connect()
-    for row in db.read("SELECT * FROM Track"):
-        print(row)
+    data = db.read("SELECT * FROM Track")
+    print(data)
     db.close()
 
 sql_server = SQLServerDB(server='SK-INSPIRON-3K\\MSSQLSERVER01', database='Chinook')
-
 # This will print the table Track.
 use_database(sql_server)
->>>>>>> 3dce6ba523d487f5127227bb8bf63916ead83509
+
+### Stream_read
+sql_server.connect()
+sql_server.stream_read('SELECT * FROM Track', 2)
+sql_server.close()
+
+### Insert
+sql_server.connect()
+query = 'INSERT INTO Track (trackid, name, albumid, unitprice, mediatypeid, milliseconds) VALUES (?, ?, ?, ?, ?, ?)'
+params = (3504, 'abc', 346, 1, 3, 325425)
+sql_server.insert(query, params)
+sql_server.close()
+
+### Update
+sql_server.connect()
+query = 'UPDATE Track SET milliseconds = ? WHERE trackid = ?'
+params = (1234, 3504)
+sql_server.update(query, params)
+sql_server.close()
