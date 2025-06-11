@@ -1,4 +1,4 @@
-from base_class import BaseDBInterface
+from source.base_class import BaseDBInterface
 import pyodbc
 from typing import Generator, Any, List
 
