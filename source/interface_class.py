@@ -88,7 +88,7 @@ class SQLServerDB(BaseDBInterface):
             self.conn.rollback()
             raise
 
-    def bulk_upsert(self, query, params_list):
+    def bulk_upsert(self, query, params_list) -> None:
         '''
         Execute bulk UPSERT query using MERGE.
         Each item in params_list is a tuple of values for the source.
