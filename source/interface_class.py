@@ -1,6 +1,6 @@
 from source.base_class import BaseDBInterface
 import pyodbc
-from typing import Generator, Any, List
+from typing import List
 
 class SQLServerDB(BaseDBInterface):
     def __init__(self, server, database, username='', password='', driver='{ODBC Driver 17 for SQL Server}') -> None:
